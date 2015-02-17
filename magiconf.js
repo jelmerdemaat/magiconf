@@ -6,6 +6,7 @@
 var fs = require('fs'),
     path = require('path'),
     mkdirp = require('mkdirp'),
+    colors = require('colors'),
     commander = require('commander'),
     Template = require('template'),
     template = new Template(),
@@ -14,12 +15,14 @@ var fs = require('fs'),
 var magiconf = {
   defaults: {
     source: getUserHome() + '/projects/',
-    destination: './dist/sites/test',
-    extension: '.local'
+    destination: './dist/sites/test/',
+    extension: '.local',
+    backups: getUserHome() + '/.magiconf-backups/'
   },
   vhosts: {
     source: '',
     destination: '',
+    backups: '',
     list: []
   }
 };
@@ -33,11 +36,14 @@ commander
   .option('-s, --source [source]', 'Source directory containing your vhost folders \n\t\t\t\t\t Default: ' + magiconf.defaults.source)
   .option('-d, --destination [destination]', 'Destination directory for your vhost configuration \n\t\t\t\t\t Default: ' + magiconf.defaults.destination)
   .option('-e, --extension [extension]', 'Extension of vhost domain name \n\t\t\t\t\t Default: ' + magiconf.defaults.extension)
+  .option('-b, --backups [backups]', 'Backup folder for old vhost files \n\t\t\t\t\t Default: ' + magiconf.defaults.backups)
   .parse(process.argv);
 
 magiconf.vhosts.source = commander.directory || magiconf.defaults.source;
 magiconf.vhosts.destination = commander.destination || magiconf.defaults.destination;
 magiconf.vhosts.extension = commander.extension || magiconf.defaults.extension;
+magiconf.vhosts.backups = commander.backups || magiconf.defaults.backups;
+
 magiconf.vhosts.list = fs.readdirSync(magiconf.vhosts.source);
 
 magiconf.vhosts.list = magiconf.vhosts.list.filter(function(file) {
@@ -45,24 +51,50 @@ magiconf.vhosts.list = magiconf.vhosts.list.filter(function(file) {
       stat = fs.statSync(p);
 
   // Ignore (hidden) files:
-  if(file && file[0] != '.' && stat.isDirectory()) {
-    return true;
-  }
+  if(file && file[0] != '.' && stat.isDirectory()) return true;
 });
 
-console.info(magiconf);
+// console.info(magiconf.vhosts);
 
 if(!fs.existsSync(magiconf.vhosts.destination)) {
   console.log(magiconf.vhosts.destination + ' does not yet exist, creating...');
   mkdirp(magiconf.vhosts.destination, function(error) {
     if (error) throw error;
     console.log(magiconf.vhosts.destination + ' created.');
-
     renderVhostFiles();
   });
 } else {
-  console.log('Backing up existing vhosts in ~/.magiconf-backups...')
+  backupVhostFiles();
   renderVhostFiles();
+}
+
+function backupVhostFiles() {
+  var existing_files = fs.readdirSync(magiconf.vhosts.destination);
+
+  existing_files.forEach(function(name, i, array) {
+    console.log(('Backing up ' + name + ' in ' + magiconf.defaults.backups + name + '...').grey);
+
+    var dst = path.join(magiconf.vhosts.destination, name),
+        bkp = path.join(magiconf.vhosts.backups, name);
+
+    if(!fs.existsSync(magiconf.vhosts.backups)) {
+      console.log(magiconf.vhosts.backups + ' does not yet exist, creating...');
+      mkdirp(magiconf.vhosts.backups, function(error) {
+        if (error) throw error;
+        console.log(magiconf.vhosts.backups + ' created.');
+        backupVhostFile(dst, bkp, name);
+      });
+    } else {
+      backupVhostFile(dst, bkp, name);
+    }
+  });
+}
+
+function backupVhostFile(src, dst, name) {
+  copyFile(src, dst, function(error) {
+    if(error) throw error;
+    console.log('✓'.green + ' Backed up ' + name + ' in ' + (dst).yellow + '!');
+  });
 }
 
 function renderVhostFiles() {
@@ -87,14 +119,48 @@ function writeVhostFile(name, content) {
 
     fs.writeFile(p, content, function (error) {
       if (error) throw error;
-      console.log('It\'s saved!');
     });
 }
 
 
 ///////////////////////////////////////
-// Functions
+// Functions from external resources
+
+
+// Get user home directory
+// http://stackoverflow.com/a/9081436
 
 function getUserHome() {
   return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
+}
+
+
+// Copy files in Node
+// http://stackoverflow.com/a/14387791
+
+function copyFile(source, target, cb) {
+  var cbCalled = false;
+
+  var rd = fs.createReadStream(source);
+  rd.on('error', function(err) {
+    done(err);
+  });
+
+  var wr = fs.createWriteStream(target);
+  wr.on('error', function(err) {
+    done(err);
+  });
+
+  wr.on('close', function(ex) {
+    done();
+  });
+
+  rd.pipe(wr);
+
+  function done(err) {
+    if (!cbCalled) {
+      cb(err);
+      cbCalled = true;
+    }
+  }
 }
