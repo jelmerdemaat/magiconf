@@ -15,7 +15,7 @@ var fs = require('fs'),
 var magiconf = {
   defaults: {
     source: getUserHome() + '/projects/',
-    destination: './dist/sites/test/',
+    destination: './dist/',
     extension: '.local',
     backups: getUserHome() + '/.magiconf-backups/'
   },
