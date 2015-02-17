@@ -23,6 +23,7 @@ var magiconf = {
     source: '',
     destination: '',
     backups: '',
+    extension: '',
     list: []
   }
 };
@@ -54,7 +55,16 @@ magiconf.vhosts.list = magiconf.vhosts.list.filter(function(file) {
   if(file && file[0] != '.' && stat.isDirectory() && file != 'default' && file != '000-default' && file != 'default-ssl') return true;
 });
 
-// console.info(magiconf.vhosts);
+console.log(
+  ('--- ' + 'MAGICONF' + ' CONFIGURATION ---').inverse,
+  '\nSource: \t'.cyan, magiconf.vhosts.source,
+  '\nDestination: \t'.cyan, magiconf.vhosts.destination,
+  '\nBackups: \t'.cyan, magiconf.vhosts.backups,
+  '\nExtension: \t'.cyan, magiconf.vhosts.extension
+);
+
+console.log('\nFound vhost folders: '.cyan + magiconf.vhosts.list);
+
 
 if(!fs.existsSync(magiconf.vhosts.destination)) {
   console.log(magiconf.vhosts.destination + ' does not yet exist, creating...');
@@ -109,19 +119,27 @@ function renderVhostFiles() {
 
     template.render('vhost.tmpl', function(error, content) {
       if (error) throw error;
-      writeVhostFile(name, content);
+
+      writeVhostFile(name, content, i);
     });
   });
+
 }
 
-function writeVhostFile(name, content) {
+function writeVhostFile(name, content, count) {
     var p = path.join(magiconf.vhosts.destination, name);
 
     fs.writeFile(p, content, function (error) {
       if (error) throw error;
+      console.log('✓'.green + ' Wrote vhost file ' + p .yellow + '!');
+
+      if(count + 1 === magiconf.vhosts.list.length) endMagiconf();
     });
 }
 
+function endMagiconf() {
+  console.log('\nDone. Bye!\n')
+}
 
 ///////////////////////////////////////
 // Functions from external resources
