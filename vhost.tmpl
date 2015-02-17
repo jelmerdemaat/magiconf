@@ -1,0 +1,16 @@
+<VirtualHost <%= vhost_name %><%= vhost_extension %>>
+
+  ServerAdmin webmaster@<%= vhost_name %><%= vhost_extension %>
+  ServerName <%= vhost_name %><%= vhost_extension %>
+  ServerAlias *.<%= vhost_name %><%= vhost_extension %>
+  DocumentRoot <%= vhost_directory %>
+
+  <Directory <%= vhost_directory %>>
+
+    Options Indexes FollowSymLinks MultiViews
+    Order allow,deny
+    allow from all
+
+  </Directory>
+
+</VirtualHost>
