@@ -18,7 +18,7 @@
     "httpd"
   ],
   "author": "Jelmer de Maat",
-  "license": "GNU GENERAL PUBLIC LICENSE",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/jelmerdemaat/magiconf/issues"
   },
