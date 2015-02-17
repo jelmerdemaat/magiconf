@@ -51,7 +51,7 @@ magiconf.vhosts.list = magiconf.vhosts.list.filter(function(file) {
       stat = fs.statSync(p);
 
   // Ignore (hidden) files:
-  if(file && file[0] != '.' && stat.isDirectory()) return true;
+  if(file && file[0] != '.' && stat.isDirectory() && file != 'default' && file != '000-default' && file != 'default-ssl') return true;
 });
 
 // console.info(magiconf.vhosts);
