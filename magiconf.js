@@ -16,7 +16,7 @@ var magiconf = {
   defaults: {
     source: getUserHome() + '/projects/',
     destination: './dist/',
-    extension: '.local',
+    extension: '.dev',
     backups: getUserHome() + '/.magiconf-backups/'
   },
   vhosts: {
@@ -129,7 +129,7 @@ function renderVhostFiles() {
 function writeVhostFile(name, content, count) {
     var p = path.join(magiconf.vhosts.destination, name);
 
-    fs.writeFile(p, content, function (error) {
+    fs.writeFile(p + '.conf', content, function (error) {
       if (error) throw error;
       console.log('✓'.green + ' Wrote vhost file ' + p .yellow + '!');
 
